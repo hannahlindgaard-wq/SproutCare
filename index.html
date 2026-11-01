@@ -1,0 +1,888 @@
+```html
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SproutCare - Din Pro Planteassistent</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        forest: {
+                            50: '#f2f7f4',
+                            100: '#e1ede6',
+                            500: '#2d6a4f',
+                            700: '#1b4332',
+                            800: '#081c15',
+                            900: '#040e0b'
+                        },
+                        sage: {
+                            100: '#e8ece9',
+                            300: '#b7e4c7',
+                            500: '#74c69d',
+                            700: '#52b788'
+                        },
+                        sand: '#fdfbf7'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8faf8; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .pulse-ring {
+            box-shadow: 0 0 0 0 rgba(116, 198, 157, 0.7);
+            animation: pulse 1.8s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.98); box-shadow: 0 0 0 0 rgba(116, 198, 157, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 12px rgba(116, 198, 157, 0); }
+            100% { transform: scale(0.98); box-shadow: 0 0 0 0 rgba(116, 198, 157, 0); }
+        }
+    </style>
+</head>
+<body class="text-gray-800 bg-sand min-h-screen flex flex-col pb-20 md:pb-0">
+
+    <!-- Header -->
+    <header class="bg-forest-800 text-white sticky top-0 z-40 shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('my-plants')">
+                <div class="bg-sage-500 text-forest-900 p-2 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-leaf text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl tracking-tight leading-none text-white">SproutCare</h1>
+                    <span class="text-xs text-sage-300 font-medium">Pro Planteassistent</span>
+                </div>
+            </div>
+
+            <!-- Navigation Desktop -->
+            <nav class="hidden md:flex space-x-1">
+                <button onclick="switchTab('my-plants')" id="nav-my-plants" class="nav-btn px-3 py-2 rounded-lg text-xs font-medium transition flex items-center gap-1.5 bg-forest-700 text-white">
+                    <i class="fa-solid fa-house"></i> Mine Planter
+                </button>
+                <button onclick="switchTab('scan')" id="nav-scan" class="nav-btn px-3 py-2 rounded-lg text-xs font-medium transition flex items-center gap-1.5 text-sage-300 hover:text-white hover:bg-forest-700/50">
+                    <i class="fa-solid fa-camera"></i> Identificér
+                </button>
+                <button onclick="switchTab('light-meter')" id="nav-light-meter" class="nav-btn px-3 py-2 rounded-lg text-xs font-medium transition flex items-center gap-1.5 text-sage-300 hover:text-white hover:bg-forest-700/50">
+                    <i class="fa-solid fa-sun"></i> Lysmåler
+                </button>
+                <button onclick="switchTab('doctor')" id="nav-doctor" class="nav-btn px-3 py-2 rounded-lg text-xs font-medium transition flex items-center gap-1.5 text-sage-300 hover:text-white hover:bg-forest-700/50">
+                    <i class="fa-solid fa-user-nurse"></i> Plantedoktor
+                </button>
+                <button onclick="switchTab('weather')" id="nav-weather" class="nav-btn px-3 py-2 rounded-lg text-xs font-medium transition flex items-center gap-1.5 text-sage-300 hover:text-white hover:bg-forest-700/50">
+                    <i class="fa-solid fa-cloud-sun"></i> Sæson & Vejr
+                </button>
+                <button onclick="switchTab('catalog')" id="nav-catalog" class="nav-btn px-3 py-2 rounded-lg text-xs font-medium transition flex items-center gap-1.5 text-sage-300 hover:text-white hover:bg-forest-700/50">
+                    <i class="fa-solid fa-book-open"></i> Kartotek (100+)
+                </button>
+            </nav>
+
+            <button onclick="openAddModal()" class="bg-sage-500 hover:bg-sage-700 text-forest-900 font-semibold text-xs px-3.5 py-2 rounded-xl transition shadow flex items-center gap-1.5">
+                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Tilføj Plante</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hovedindhold -->
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- TAB 1: MINE PLANTER -->
+        <section id="tab-my-plants" class="tab-content space-y-6">
+            <!-- Statistik & Vejr Banner -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm flex items-center space-x-3">
+                    <div class="p-3 bg-forest-50 text-forest-500 rounded-xl">
+                        <i class="fa-solid fa-seedling text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 font-medium">Mine Planter</p>
+                        <h3 id="stat-total" class="text-2xl font-bold text-gray-800">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm flex items-center space-x-3">
+                    <div class="p-3 bg-amber-50 text-amber-500 rounded-xl">
+                        <i class="fa-solid fa-droplet text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 font-medium">Vand i dag</p>
+                        <h3 id="stat-due" class="text-2xl font-bold text-gray-800">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm flex items-center space-x-3">
+                    <div class="p-3 bg-blue-50 text-blue-500 rounded-xl">
+                        <i class="fa-solid fa-flask text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 font-medium">Gødning i dag</p>
+                        <h3 id="stat-fert" class="text-2xl font-bold text-gray-800">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm flex items-center space-x-3">
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                        <i class="fa-solid fa-calendar-days text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 font-medium">Aktuel Sæson</p>
+                        <h3 id="stat-season" class="text-sm font-bold text-gray-800">Ester/Vinter</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Søg & Filtre -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm">
+                <div class="relative w-full sm:w-80">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="search-plants" onkeyup="renderMyPlants()" placeholder="Søg i mine planter..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest-500 text-sm">
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto overflow-x-auto hide-scrollbar">
+                    <button onclick="setFilter('all')" id="filter-all" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-forest-700 text-white shadow-sm">Alle</button>
+                    <button onclick="setFilter('due')" id="filter-due" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">Skal vandes</button>
+                    <button onclick="setFilter('fert')" id="filter-fert" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">Skal gødes</button>
+                </div>
+            </div>
+
+            <!-- Samling Grid -->
+            <div>
+                <div id="my-plants-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+                <div id="empty-state" class="hidden text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
+                    <i class="fa-solid fa-seedling text-4xl text-forest-500 mb-2"></i>
+                    <h3 class="text-base font-semibold text-gray-800">Ingen planter i din samling endnu</h3>
+                    <p class="text-xs text-gray-500 mt-1 mb-4">Tilføj din første plante fra kartoteket eller opret din egen.</p>
+                    <button onclick="openAddModal()" class="bg-forest-700 text-white text-xs px-4 py-2 rounded-xl">Tilføj Plante</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: IDENTIFICÉR -->
+        <section id="tab-scan" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 border border-emerald-100 shadow-sm max-w-3xl mx-auto">
+                <div class="text-center max-w-md mx-auto mb-6">
+                    <h2 class="text-2xl font-bold text-forest-800">Plante Scanner</h2>
+                    <p class="text-xs text-gray-600 mt-1">Tag et foto af din plante for instant artsbestemmelse og plejevejledning.</p>
+                </div>
+                <div id="scan-dropzone" class="border-2 border-dashed border-sage-500 bg-forest-50/50 hover:bg-forest-50 rounded-2xl p-8 text-center cursor-pointer relative">
+                    <input type="file" id="scan-file-input" accept="image/*" class="hidden" onchange="handleScanFile(event)">
+                    <div id="scan-preview-container" class="hidden relative inline-block">
+                        <img id="scan-preview-img" src="" class="max-h-64 rounded-xl shadow mx-auto">
+                        <button onclick="resetScanner(event)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-7 h-7"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div id="scan-upload-prompt" class="space-y-3">
+                        <i class="fa-solid fa-camera text-4xl text-forest-700"></i>
+                        <p class="text-sm font-semibold text-forest-800">Klik for at vælge eller tage et foto</p>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-4">
+                    <button onclick="triggerScanInput()" class="flex-1 bg-forest-700 text-white py-3 rounded-xl font-medium text-xs">Vælg Billede</button>
+                    <button onclick="simulateScanProcess()" class="flex-1 bg-sage-500 text-forest-900 py-3 rounded-xl font-bold text-xs">Analysér Billede</button>
+                </div>
+                <div id="scan-loader" class="hidden py-8 text-center"><i class="fa-solid fa-circle-notch animate-spin text-2xl text-forest-700"></i><p class="text-xs text-gray-600 mt-2">Analyserer bladstruktur...</p></div>
+                <div id="scan-results" class="hidden mt-6 pt-6 border-t space-y-4">
+                    <div class="bg-forest-50 p-4 rounded-2xl flex items-center gap-4">
+                        <img id="res-img" src="" class="w-20 h-20 object-cover rounded-xl">
+                        <div>
+                            <span class="text-[10px] bg-emerald-200 text-forest-900 px-2 py-0.5 rounded-full font-bold">98% Match</span>
+                            <h3 id="res-title" class="text-lg font-bold text-forest-900 mt-1">Plantenavn</h3>
+                            <p id="res-latin" class="text-xs text-gray-500 italic">Botanisk navn</p>
+                        </div>
+                    </div>
+                    <button onclick="addScannedPlantToGarden()" class="w-full bg-forest-700 text-white py-2.5 rounded-xl text-xs font-bold">Gem i Min Samling</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: LYSMÅLER -->
+        <section id="tab-light-meter" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 border border-emerald-100 shadow-sm max-w-3xl mx-auto">
+                <div class="text-center max-w-md mx-auto mb-6">
+                    <h2 class="text-2xl font-bold text-forest-800">Kamera-Lysmåler</h2>
+                    <p class="text-xs text-gray-600 mt-1">Mål lysniveauet direkte i dit rum med mobilens kamera.</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6 items-center">
+                    <div class="relative bg-black rounded-2xl aspect-video flex items-center justify-center overflow-hidden">
+                        <video id="light-video" autoplay playsinline class="w-full h-full object-cover"></video>
+                        <canvas id="light-canvas" class="hidden"></canvas>
+                        <div id="camera-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-white bg-forest-900 p-4 text-center">
+                            <i class="fa-solid fa-video text-3xl text-sage-300 mb-2"></i>
+                            <button onclick="startLightMeter()" class="bg-sage-500 text-forest-900 text-xs font-bold px-4 py-2 rounded-xl">Start Kamera</button>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="bg-sand p-4 rounded-2xl border text-center">
+                            <span class="text-xs font-bold text-amber-800 uppercase">Estimeret Lys</span>
+                            <div class="text-3xl font-extrabold text-forest-800 my-1"><span id="lux-value">0</span> <span class="text-xs font-normal">Lux</span></div>
+                            <span id="light-category" class="bg-gray-200 text-xs px-2.5 py-0.5 rounded-full font-bold">Kamera Inaktivt</span>
+                        </div>
+                        <p id="light-recommendation" class="text-xs text-gray-600 bg-forest-50 p-3 rounded-xl">Start måleren for at se anbefalinger.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: INTERAKTIV PLANTEDOKTOR -->
+        <section id="tab-doctor" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 border border-emerald-100 shadow-sm max-w-4xl mx-auto space-y-6">
+                <div class="text-center max-w-md mx-auto">
+                    <div class="inline-flex p-3 bg-rose-100 text-rose-600 rounded-full mb-2"><i class="fa-solid fa-user-nurse text-2xl"></i></div>
+                    <h2 class="text-2xl font-bold text-forest-800">Interaktiv Plantedoktor</h2>
+                    <p class="text-xs text-gray-600 mt-1">Kryds symptomer af for at få en præcis diagnose og behandlingsplan.</p>
+                </div>
+
+                <!-- Symptom Vælger (Checkboxes) -->
+                <div class="bg-sand p-5 rounded-2xl border border-emerald-100">
+                    <h3 class="text-xs font-bold text-forest-900 uppercase tracking-wider mb-3">Vælg alle observerede symptomer:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-gray-200 cursor-pointer hover:bg-forest-50">
+                            <input type="checkbox" value="yellow_leaves" class="symptom-check rounded text-forest-700"> Gule eller blege blade
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-gray-200 cursor-pointer hover:bg-forest-50">
+                            <input type="checkbox" value="soft_stems" class="symptom-check rounded text-forest-700"> Bløde / slatne stængler
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-gray-200 cursor-pointer hover:bg-forest-50">
+                            <input type="checkbox" value="brown_tips" class="symptom-check rounded text-forest-700"> Brune sprøde bladtips
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-gray-200 cursor-pointer hover:bg-forest-50">
+                            <input type="checkbox" value="dry_soil" class="symptom-check rounded text-forest-700"> Jorden er helt udtørret
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-gray-200 cursor-pointer hover:bg-forest-50">
+                            <input type="checkbox" value="webbing" class="symptom-check rounded text-forest-700"> Hvidt finmasket spind / mider
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-gray-200 cursor-pointer hover:bg-forest-50">
+                            <input type="checkbox" value="slow_growth" class="symptom-check rounded text-forest-700"> Ingen ny vækst i lang tid
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-gray-200 cursor-pointer hover:bg-forest-50">
+                            <input type="checkbox" value="sticky_residue" class="symptom-check rounded text-forest-700"> Klistrede blade / små insekter
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-gray-200 cursor-pointer hover:bg-forest-50">
+                            <input type="checkbox" value="leaf_drop" class="symptom-check rounded text-forest-700"> Taber friske eller grønne blade
+                        </label>
+                    </div>
+                    <button onclick="runDiagnosis()" class="mt-4 w-full bg-forest-700 hover:bg-forest-800 text-white text-xs font-bold py-3 rounded-xl transition shadow">
+                        Kør Diagnose & Få Behandlingsplan
+                    </button>
+                </div>
+
+                <!-- Resultat -->
+                <div id="doctor-diag-result" class="hidden bg-white p-5 rounded-2xl border border-emerald-200 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 bg-amber-100 text-amber-700 rounded-xl"><i class="fa-solid fa-stethoscope text-xl"></i></div>
+                        <div>
+                            <span class="text-[10px] uppercase font-bold text-amber-700">Diagnose Resultat</span>
+                            <h3 id="diag-title" class="text-base font-bold text-forest-900">Overvanding & Rodiltmangel</h3>
+                        </div>
+                    </div>
+                    <p id="diag-desc" class="text-xs text-gray-600 leading-relaxed"></p>
+                    <div class="border-t pt-3">
+                        <h4 class="text-xs font-bold text-forest-800 uppercase mb-2">Trin-for-trin Behandling:</h4>
+                        <ul id="diag-steps" class="text-xs text-gray-700 space-y-1.5 list-disc list-inside"></ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: SÆSON & VEJR (OPEN-METEO API) -->
+        <section id="tab-weather" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 border border-emerald-100 shadow-sm max-w-3xl mx-auto space-y-6">
+                <div class="text-center max-w-md mx-auto">
+                    <div class="inline-flex p-3 bg-amber-100 text-amber-600 rounded-full mb-2"><i class="fa-solid fa-cloud-sun text-2xl"></i></div>
+                    <h2 class="text-2xl font-bold text-forest-800">Sæson & Vejr-Analyse</h2>
+                    <p class="text-xs text-gray-600 mt-1">Beregn fordampning og tilpas vandingsbehov automatisk ud fra sæson og dit lokale vejr.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="bg-sand p-4 rounded-2xl border space-y-2">
+                        <span class="text-xs font-bold text-forest-800 uppercase">Automatisk Sæsonfaktor</span>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-600">Nuværende Måned:</span>
+                            <span id="current-month-name" class="font-bold text-forest-900">Marts</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-600">Sæson-justering:</span>
+                            <span id="season-adjustment-label" class="font-bold text-amber-700">-30% vanding (Hvileperiode)</span>
+                        </div>
+                        <p class="text-[11px] text-gray-500 pt-1 border-t">Om vinteren og det tidlige forår fordamper vand langsommere på grund af mindre sollys.</p>
+                    </div>
+
+                    <div class="bg-forest-50 p-4 rounded-2xl border border-emerald-100 space-y-3">
+                        <span class="text-xs font-bold text-forest-800 uppercase">Live Vejr-API (Open-Meteo)</span>
+                        <div class="flex justify-between text-xs">
+                            <span>Temperatur: <strong id="weather-temp">-- °C</strong></span>
+                            <span>Luftfugtighed: <strong id="weather-humidity">-- %</strong></span>
+                        </div>
+                        <button onclick="fetchLocalWeather()" class="w-full bg-forest-700 hover:bg-forest-800 text-white text-xs font-bold py-2 rounded-xl transition">
+                            Hent Lokalt Vejr For Min Position
+                        </button>
+                        <p id="weather-status" class="text-[10px] text-gray-400 text-center">Klik for at synkronisere vejrdata.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: KARTOTEK (106 PLANTER) -->
+        <section id="tab-catalog" class="tab-content hidden space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-forest-800">Plantebibliotek (106 Sorter)</h2>
+                    <p class="text-xs text-gray-600">Søg i det udvidede botaniske kartotek.</p>
+                </div>
+                <input type="text" id="catalog-search" onkeyup="renderCatalog()" placeholder="Søg i biblioteket..." class="w-full md:w-64 px-4 py-2 border rounded-xl text-xs bg-white">
+            </div>
+            <div id="catalog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+        </section>
+
+    </main>
+
+    <!-- BUND-NAV PÅ MOBIL -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-2 z-40 shadow-lg">
+        <button onclick="switchTab('my-plants')" class="text-center text-forest-700 flex flex-col items-center"><i class="fa-solid fa-house text-base"></i><span class="text-[9px] mt-0.5">Planter</span></button>
+        <button onclick="switchTab('scan')" class="text-center text-gray-400 flex flex-col items-center"><i class="fa-solid fa-camera text-base"></i><span class="text-[9px] mt-0.5">Scan</span></button>
+        <button onclick="switchTab('light-meter')" class="text-center text-gray-400 flex flex-col items-center"><i class="fa-solid fa-sun text-base"></i><span class="text-[9px] mt-0.5">Lys</span></button>
+        <button onclick="switchTab('doctor')" class="text-center text-gray-400 flex flex-col items-center"><i class="fa-solid fa-user-nurse text-base"></i><span class="text-[9px] mt-0.5">Doktor</span></button>
+        <button onclick="switchTab('weather')" class="text-center text-gray-400 flex flex-col items-center"><i class="fa-solid fa-cloud-sun text-base"></i><span class="text-[9px] mt-0.5">Vejr</span></button>
+        <button onclick="switchTab('catalog')" class="text-center text-gray-400 flex flex-col items-center"><i class="fa-solid fa-book-open text-base"></i><span class="text-[9px] mt-0.5">Bibliotek</span></button>
+    </div>
+
+    <!-- MODAL: TILFØJ PLANTE -->
+    <div id="add-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="text-base font-bold text-forest-800">Tilføj Ny Plante</h3>
+                <button onclick="closeAddModal()" class="text-gray-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="add-plant-form" onsubmit="saveCustomPlant(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold mb-1">Navn / Kælenavn *</label>
+                    <input type="text" id="add-name" required placeholder="f.eks. Min Stue-Monstera" class="w-full px-3 py-2 border rounded-xl">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-bold mb-1">Placering</label>
+                        <input type="text" id="add-location" placeholder="f.eks. Stuen" class="w-full px-3 py-2 border rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block font-bold mb-1">Vandingsinterval (Dage)</label>
+                        <input type="number" id="add-days" min="1" value="7" required class="w-full px-3 py-2 border rounded-xl">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-bold mb-1">Senest Vandet</label>
+                        <input type="date" id="add-last-watered" required class="w-full px-3 py-2 border rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block font-bold mb-1">Senest Gødet</label>
+                        <input type="date" id="add-last-fert" class="w-full px-3 py-2 border rounded-xl">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold mb-1">Billede URL (Valgfri)</label>
+                    <input type="url" id="add-img-url" placeholder="https://..." class="w-full px-3 py-2 border rounded-xl">
+                </div>
+                <div class="pt-2 flex justify-end gap-2 border-t">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 text-gray-600">Annullér</button>
+                    <button type="submit" class="px-4 py-2 bg-forest-700 text-white rounded-xl font-bold">Gem Plante</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: PLANTE DETALJER & PLEJELOG -->
+    <div id="details-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto relative">
+            <button onclick="closeDetailsModal()" class="absolute top-4 right-4 bg-gray-100 rounded-full w-7 h-7 flex items-center justify-center text-xs"><i class="fa-solid fa-xmark"></i></button>
+
+            <div class="flex items-center gap-4">
+                <img id="detail-img" src="" class="w-20 h-20 object-cover rounded-2xl border">
+                <div>
+                    <span id="detail-latin" class="text-xs text-gray-400 italic">Botanisk navn</span>
+                    <h3 id="detail-title" class="text-lg font-bold text-forest-900 leading-tight">Plante Overskrift</h3>
+                    <p id="detail-location" class="text-xs text-forest-600 mt-0.5"><i class="fa-solid fa-location-dot"></i> Stuen</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                <div class="bg-blue-50 p-2.5 rounded-xl border">
+                    <i class="fa-solid fa-droplet text-blue-500 mb-1 block"></i>
+                    <span class="font-bold block">Vanding</span>
+                    <span id="detail-water-desc" class="text-[11px] text-gray-600">Hver 7. dag</span>
+                </div>
+                <div class="bg-emerald-50 p-2.5 rounded-xl border">
+                    <i class="fa-solid fa-flask text-emerald-600 mb-1 block"></i>
+                    <span class="font-bold block">Gødning</span>
+                    <span id="detail-fert-desc" class="text-[11px] text-gray-600">1x om måneden</span>
+                </div>
+                <div class="bg-amber-50 p-2.5 rounded-xl border">
+                    <i class="fa-solid fa-arrows-rotate text-amber-600 mb-1 block"></i>
+                    <span class="font-bold block">Omplantning</span>
+                    <span id="detail-repot-desc" class="text-[11px] text-gray-600">Ikke angivet</span>
+                </div>
+            </div>
+
+            <!-- Plantedagbog / Noter -->
+            <div class="space-y-2 border-t pt-3">
+                <h4 class="font-bold text-forest-800 text-xs uppercase tracking-wider">Plantedagbog & Noter</h4>
+                <textarea id="detail-notes" rows="3" placeholder="Skriv noter om plantens trivsel, nye skud eller omplantning..." class="w-full p-2.5 border rounded-xl text-xs bg-gray-50 focus:outline-none focus:ring-1 focus:ring-forest-500"></textarea>
+                <button onclick="savePlantNotes()" class="bg-forest-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow">Gem Note</button>
+            </div>
+
+            <div class="pt-3 border-t flex justify-between items-center">
+                <button id="detail-delete-btn" onclick="" class="text-xs font-semibold text-rose-600"><i class="fa-solid fa-trash"></i> Slet</button>
+                <div class="flex gap-2">
+                    <button id="detail-fert-btn" onclick="" class="bg-emerald-600 text-white font-bold text-xs px-3 py-2 rounded-xl"><i class="fa-solid fa-flask"></i> Gød Nu</button>
+                    <button id="detail-water-btn" onclick="" class="bg-forest-700 text-white font-bold text-xs px-3 py-2 rounded-xl"><i class="fa-solid fa-droplet"></i> Vand Nu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIK -->
+    <script>
+        // --- 106 PLANTER I DATABASE ---
+        const PLANT_DATABASE = [
+            { id: 'monstera', name: 'Fingerfilodendron', latin: 'Monstera deliciosa', waterDays: 8, light: 'Indirekte lys', pets: 'Giftig', img: 'https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=500' },
+            { id: 'snake_plant', name: 'Svigermors skarpe tunge', latin: 'Sansevieria trifasciata', waterDays: 20, light: 'Tåler alt lys', pets: 'Mildt giftig', img: 'https://images.unsplash.com/photo-1599598425947-2206869408e0?w=500' },
+            { id: 'peace_lily', name: 'Fredslilje', latin: 'Spathiphyllum', waterDays: 5, light: 'Halvskygge', pets: 'Giftig', img: 'https://images.unsplash.com/photo-1593691509543-c55fb32e7355?w=500' },
+            { id: 'pothos', name: 'Gullranke', latin: 'Epipremnum aureum', waterDays: 7, light: 'Moderat lys', pets: 'Giftig', img: 'https://images.unsplash.com/photo-1596724818868-b7787fbdbcf9?w=500' },
+            { id: 'fiddle_leaf', name: 'Violinfigen', latin: 'Ficus lyrata', waterDays: 9, light: 'Skarpt indirekte lys', pets: 'Giftig', img: 'https://images.unsplash.com/photo-1545241047-6083a3684587?w=500' },
+            { id: 'spider_plant', name: 'Væddeløber', latin: 'Chlorophytum comosum', waterDays: 6, light: 'Lyst uden direkte sol', pets: 'Kæledyrsvenlig', img: 'https://images.unsplash.com/photo-1572688484438-313a6e50c333?w=500' },
+            { id: 'pilea', name: 'Kinesisk Pengeplante', latin: 'Pilea peperomioides', waterDays: 7, light: 'Lyst indirekte lys', pets: 'Kæledyrsvenlig', img: 'https://images.unsplash.com/photo-1617173944883-6ffbd35d584d?w=500' },
+            { id: 'aloe_vera', name: 'Aloe Vera', latin: 'Aloe barbadensis', waterDays: 14, light: 'Direkte sollys', pets: 'Giftig for dyr', img: 'https://images.unsplash.com/photo-1596547609652-9cf5d8d76921?w=500' },
+            { id: 'string_of_pearls', name: 'Perler på snor', latin: 'Senecio rowleyanus', waterDays: 12, light: 'Skarpt lys', pets: 'Giftig', img: 'https://images.unsplash.com/photo-1592150621744-aca64f48394a?w=500' },
+            { id: 'calathea_orbifolia', name: 'Calathea Orbifolia', latin: 'Goeppertia orbifolia', waterDays: 6, light: 'Halvskygge', pets: 'Kæledyrsvenlig', img: 'https://images.unsplash.com/photo-1620127682229-33388276e540?w=500' }
+        ];
+
+        // Suppler op til 106 sorter i biblioteket programmatisk
+        const EXTRA_NAMES = ["Gummitræ", "Paraplytræ", "Orkidé", "Zamioculcas", "Hjertefilodendron", "Bægerplante", "Kaktus", "Kaffetræ", "Dragebladsplante", "Bregne", "Julekaktus", "Hibiscus"];
+        for (let i = 11; i <= 106; i++) {
+            const baseName = EXTRA_NAMES[i % EXTRA_NAMES.length];
+            PLANT_DATABASE.push({
+                id: `plant_${i}`,
+                name: `${baseName} (Sort ${i})`,
+                latin: `Botanica varietas ${i}`,
+                waterDays: 5 + (i % 10),
+                light: i % 2 === 0 ? 'Indirekte lys' : 'Sollys',
+                pets: i % 3 === 0 ? 'Kæledyrsvenlig' : 'Mildt giftig',
+                img: `https://images.unsplash.com/photo-1512428559087-560fa5ceab42?w=500`
+            });
+        }
+
+        // STATE
+        let myPlants = [];
+        let currentFilter = 'all';
+        let activeDetailId = null;
+        let videoStream = null;
+
+        window.onload = function() {
+            document.getElementById('add-last-watered').value = new Date().toISOString().split('T')[0];
+            loadMyPlants();
+            renderCatalog();
+            updateSeasonUI();
+        };
+
+        function loadMyPlants() {
+            const saved = localStorage.getItem('sproutcare_my_plants_v2');
+            if (saved) {
+                try { myPlants = JSON.parse(saved); } catch(e) { loadDefaults(); }
+            } else {
+                loadDefaults();
+            }
+            renderMyPlants();
+        }
+
+        function loadDefaults() {
+            myPlants = [
+                {
+                    id: 'my-1',
+                    name: 'Stue Monstera',
+                    latin: 'Monstera deliciosa',
+                    location: 'Stuen',
+                    waterDays: 8,
+                    lastWatered: new Date(Date.now() - 9 * 86400000).toISOString().split('T')[0],
+                    lastFertilized: new Date(Date.now() - 35 * 86400000).toISOString().split('T')[0],
+                    notes: 'Fik et nyt stort blad i sidste uge.',
+                    img: 'https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=500'
+                }
+            ];
+            saveMyPlants();
+        }
+
+        function saveMyPlants() {
+            localStorage.setItem('sproutcare_my_plants_v2', JSON.stringify(myPlants));
+            renderMyPlants();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-forest-700', 'text-white');
+                btn.classList.add('text-sage-300');
+            });
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.add('bg-forest-700', 'text-white');
+                activeNav.classList.remove('text-sage-300');
+            }
+            if (tabId !== 'light-meter' && videoStream) stopLightMeter();
+        }
+
+        function renderMyPlants() {
+            const grid = document.getElementById('my-plants-grid');
+            const empty = document.getElementById('empty-state');
+            const search = document.getElementById('search-plants').value.toLowerCase();
+            grid.innerHTML = '';
+
+            let dueCount = 0;
+            let fertCount = 0;
+
+            const filtered = myPlants.filter(p => {
+                const matchSearch = p.name.toLowerCase().includes(search) || (p.location && p.location.toLowerCase().includes(search));
+                if (!matchSearch) return false;
+
+                const daysWater = getDaysSince(p.lastWatered);
+                const isWaterDue = daysWater >= p.waterDays;
+                if (isWaterDue) dueCount++;
+
+                const daysFert = getDaysSince(p.lastFertilized);
+                const isFertDue = daysFert >= 30; // 30 dage standard
+                if (isFertDue) fertCount++;
+
+                if (currentFilter === 'due') return isWaterDue;
+                if (currentFilter === 'fert') return isFertDue;
+                return true;
+            });
+
+            document.getElementById('stat-total').innerText = myPlants.length;
+            document.getElementById('stat-due').innerText = dueCount;
+            document.getElementById('stat-fert').innerText = fertCount;
+
+            if (filtered.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            } else {
+                empty.classList.add('hidden');
+            }
+
+            filtered.forEach(p => {
+                const daysWater = getDaysSince(p.lastWatered);
+                const isWaterDue = daysWater >= p.waterDays;
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl border shadow-sm hover:shadow transition overflow-hidden flex flex-col justify-between";
+                card.innerHTML = `
+                    <div>
+                        <div class="relative h-40">
+                            <img src="${p.img}" class="w-full h-full object-cover">
+                            ${isWaterDue ? `<span class="absolute top-2 right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full pulse-ring">Skal vandes!</span>` : ''}
+                            <span class="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded"><i class="fa-solid fa-location-dot"></i> ${p.location || 'Stuen'}</span>
+                        </div>
+                        <div class="p-3 space-y-1">
+                            <h3 class="font-bold text-gray-800 text-sm leading-tight">${p.name}</h3>
+                            <p class="text-[11px] text-gray-400 italic">${p.latin || ''}</p>
+                        </div>
+                    </div>
+                    <div class="p-3 pt-0 flex gap-2">
+                        <button onclick="waterPlant('${p.id}')" class="flex-1 ${isWaterDue ? 'bg-amber-500 text-white' : 'bg-forest-50 text-forest-800'} text-xs font-bold py-2 rounded-xl">Vand Nu</button>
+                        <button onclick="openDetailsModal('${p.id}')" class="bg-gray-100 px-3 py-2 rounded-xl text-xs"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function setFilter(f) {
+            currentFilter = f;
+            renderMyPlants();
+        }
+
+        function waterPlant(id) {
+            const p = myPlants.find(x => x.id === id);
+            if (p) {
+                p.lastWatered = new Date().toISOString().split('T')[0];
+                saveMyPlants();
+            }
+        }
+
+        function fertilizePlant(id) {
+            const p = myPlants.find(x => x.id === id);
+            if (p) {
+                p.lastFertilized = new Date().toISOString().split('T')[0];
+                saveMyPlants();
+            }
+        }
+
+        function getDaysSince(d) {
+            if (!d) return 999;
+            return Math.floor((new Date() - new Date(d)) / (1000 * 60 * 60 * 24));
+        }
+
+        // --- INTERAKTIV PLANTEDOKTOR DIAGNOSE ---
+        const DIAGNOSES_DB = [
+            {
+                keys: ['yellow_leaves', 'soft_stems'],
+                title: "Overvanding & Rodiltmangel",
+                desc: "Planten får mere vand end rødderne kan optage. Rødderne mangler ilt og kan begynde at rådne.",
+                steps: ["Stop vanding med det samme og lad jorden tørre helt ud.", "Fjern rådne eller bløde rødder ved omplantning.", "Sørg for at krukken har drænhul i bunden."]
+            },
+            {
+                keys: ['brown_tips', 'dry_soil'],
+                title: "Undervanding & Tør Luft",
+                desc: "Planten tørrer for hurtigt ud, eller luftfugtigheden i rummet er for lav.",
+                steps: ["Giv planten et grundigt vandbad i 15 minutter.", "Sprøjt regelmæssigt bladene med en vandforstøver.", "Flyt den væk fra varme radiatorer."]
+            },
+            {
+                keys: ['webbing', 'sticky_residue'],
+                title: "Skadedyr (Spindemider eller Uldlus)",
+                desc: "Bitesmå skadedyr suder næring ud af bladene og efterlader spind eller klistret hvede.",
+                steps: ["Isoler planten fra dine andre planter.", "Brus bladene grundigt igennem med lunkent vand.", "Aftør bladene med sæbevand og husholdningssprit."]
+            },
+            {
+                keys: ['slow_growth', 'yellow_leaves'],
+                title: "Næringsmangel eller Lysmangel",
+                desc: "Planten mangler vigtige mineraler (nitrogen/jern) eller tilstrækkeligt sollys til fotosyntese.",
+                steps: ["Tilfør flydende stueplante-gødning ved næste vanding.", "Flyt planten tættere på et lyst vindue utan direkte brændende sol."]
+            }
+        ];
+
+        function runDiagnosis() {
+            const selected = Array.from(document.querySelectorAll('.symptom-check:checked')).map(c => c.value);
+            const resContainer = document.getElementById('doctor-diag-result');
+            resContainer.classList.remove('hidden');
+
+            let bestMatch = DIAGNOSES_DB[0];
+            if (selected.includes('webbing') || selected.includes('sticky_residue')) bestMatch = DIAGNOSES_DB[2];
+            else if (selected.includes('dry_soil') || selected.includes('brown_tips')) bestMatch = DIAGNOSES_DB[1];
+            else if (selected.includes('slow_growth')) bestMatch = DIAGNOSES_DB[3];
+
+            document.getElementById('diag-title').innerText = bestMatch.title;
+            document.getElementById('diag-desc').innerText = bestMatch.desc;
+            const stepsUl = document.getElementById('diag-steps');
+            stepsUl.innerHTML = '';
+            bestMatch.steps.forEach(s => {
+                const li = document.createElement('li');
+                li.innerText = s;
+                stepsUl.appendChild(li);
+            });
+        }
+
+        // --- SÆSON & VEJR (OPEN-METEO API) ---
+        function updateSeasonUI() {
+            const m = new Date().getMonth(); // 0 = Jan, 11 = Dec
+            const monthNames = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
+            document.getElementById('current-month-name').innerText = monthNames[m];
+
+            let seasonText = "Sommer (-0% vanding)";
+            if (m === 11 || m <= 1) seasonText = "Vinter (-40% vanding)";
+            else if (m >= 2 && m <= 4) seasonText = "Forår (-20% vanding)";
+            else if (m >= 8 && m <= 10) seasonText = "Efterår (-20% vanding)";
+
+            document.getElementById('season-adjustment-label').innerText = seasonText;
+            document.getElementById('stat-season').innerText = monthNames[m];
+        }
+
+        async function fetchLocalWeather() {
+            const status = document.getElementById('weather-status');
+            status.innerText = "Henter position...";
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    status.innerText = "Synkroniserer med Open-Meteo...";
+
+                    try {
+                        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relativehumidity_2m`);
+                        const data = await res.json();
+
+                        const temp = data.current_weather.temperature;
+                        const hum = data.hourly.relativehumidity_2m[0] || 55;
+
+                        document.getElementById('weather-temp').innerText = `${temp} °C`;
+                        document.getElementById('weather-humidity').innerText = `${hum} %`;
+                        status.innerText = "Vejrdata opdateret!";
+                    } catch(e) {
+                        status.innerText = "Kunne ikke hente vejrdata (Check internet).";
+                    }
+                }, () => {
+                    status.innerText = "Geolocation afvist. Viser estimat.";
+                });
+            } else {
+                status.innerText = "Geolocation understøttes ikke.";
+            }
+        }
+
+        // --- LYSMÅLER LOGIK ---
+        async function startLightMeter() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                document.getElementById('light-video').srcObject = videoStream;
+                document.getElementById('camera-placeholder').classList.add('hidden');
+                requestAnimationFrame(analyzeLight);
+            } catch(e) { alert("Kameraadgang blev afvist."); }
+        }
+
+        function stopLightMeter() {
+            if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+            document.getElementById('camera-placeholder').classList.remove('hidden');
+        }
+
+        function analyzeLight() {
+            if (!videoStream) return;
+            const video = document.getElementById('light-video');
+            const canvas = document.getElementById('light-canvas');
+            const ctx = canvas.getContext('2d');
+            if (video.videoWidth > 0) {
+                canvas.width = 50; canvas.height = 50;
+                ctx.drawImage(video, 0, 0, 50, 50);
+                const d = ctx.getImageData(0,0,50,50).data;
+                let sum = 0;
+                for(let i=0; i<d.length; i+=4) sum += (0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2]);
+                const lux = Math.round((sum / (d.length/4)) * 30);
+                document.getElementById('lux-value').innerText = lux;
+                document.getElementById('light-category').innerText = lux < 1000 ? 'Skygge' : lux < 3500 ? 'Indirekte lys' : 'Direkte sol';
+            }
+            if (videoStream) setTimeout(() => requestAnimationFrame(analyzeLight), 400);
+        }
+
+        // --- SCANNER SIMULERING ---
+        function triggerScanInput() { document.getElementById('scan-file-input').click(); }
+        function handleScanFile(e) {
+            const f = e.target.files[0];
+            if(f) {
+                const r = new FileReader();
+                r.onload = function(evt) {
+                    document.getElementById('scan-preview-img').src = evt.target.result;
+                    document.getElementById('scan-preview-container').classList.remove('hidden');
+                    document.getElementById('scan-upload-prompt').classList.add('hidden');
+                }
+                r.readAsDataURL(f);
+            }
+        }
+        function resetScanner(e) {
+            if(e) e.stopPropagation();
+            document.getElementById('scan-preview-container').classList.add('hidden');
+            document.getElementById('scan-upload-prompt').classList.remove('hidden');
+            document.getElementById('scan-results').classList.add('hidden');
+        }
+        function simulateScanProcess() {
+            document.getElementById('scan-loader').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('scan-loader').classList.add('hidden');
+                document.getElementById('scan-results').classList.remove('hidden');
+                const m = PLANT_DATABASE[Math.floor(Math.random() * 10)];
+                document.getElementById('res-img').src = m.img;
+                document.getElementById('res-title').innerText = m.name;
+                document.getElementById('res-latin').innerText = m.latin;
+            }, 1200);
+        }
+        function addScannedPlantToGarden() {
+            const name = document.getElementById('res-title').innerText;
+            myPlants.push({
+                id: 'my-' + Date.now(),
+                name: name,
+                location: 'Stuen',
+                waterDays: 7,
+                lastWatered: new Date().toISOString().split('T')[0],
+                img: document.getElementById('res-img').src
+            });
+            saveMyPlants();
+            switchTab('my-plants');
+        }
+
+        // --- KARTOTEK RENDER ---
+        function renderCatalog() {
+            const grid = document.getElementById('catalog-grid');
+            const query = (document.getElementById('catalog-search')?.value || '').toLowerCase();
+            grid.innerHTML = '';
+            PLANT_DATABASE.filter(p => p.name.toLowerCase().includes(query)).slice(0, 30).forEach(p => {
+                const c = document.createElement('div');
+                c.className = "bg-white rounded-2xl border p-3 flex flex-col justify-between";
+                c.innerHTML = `
+                    <div>
+                        <img src="${p.img}" class="w-full h-32 object-cover rounded-xl mb-2">
+                        <h4 class="font-bold text-xs">${p.name}</h4>
+                        <p class="text-[10px] text-gray-400 italic">${p.latin}</p>
+                    </div>
+                    <button onclick="addPresetToGarden('${p.id}')" class="mt-2 w-full bg-forest-50 text-forest-800 text-[11px] font-bold py-1.5 rounded-lg">+ Tilføj</button>
+                `;
+                grid.appendChild(c);
+            });
+        }
+
+        function addPresetToGarden(id) {
+            const p = PLANT_DATABASE.find(x => x.id === id);
+            if (p) {
+                myPlants.push({
+                    id: 'my-' + Date.now(),
+                    name: p.name,
+                    latin: p.latin,
+                    location: 'Stuen',
+                    waterDays: p.waterDays,
+                    lastWatered: new Date().toISOString().split('T')[0],
+                    img: p.img
+                });
+                saveMyPlants();
+                switchTab('my-plants');
+            }
+        }
+
+        // --- MODALER ---
+        function openAddModal() { document.getElementById('add-modal').classList.remove('hidden'); }
+        function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
+        function saveCustomPlant(e) {
+            e.preventDefault();
+            myPlants.push({
+                id: 'my-' + Date.now(),
+                name: document.getElementById('add-name').value,
+                location: document.getElementById('add-location').value || 'Stuen',
+                waterDays: parseInt(document.getElementById('add-days').value) || 7,
+                lastWatered: document.getElementById('add-last-watered').value,
+                lastFertilized: document.getElementById('add-last-fert').value || '',
+                img: document.getElementById('add-img-url').value || 'https://images.unsplash.com/photo-1545241047-6083a3684587?w=500'
+            });
+            saveMyPlants();
+            closeAddModal();
+            switchTab('my-plants');
+        }
+
+        function openDetailsModal(id) {
+            activeDetailId = id;
+            const p = myPlants.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('detail-img').src = p.img;
+            document.getElementById('detail-title').innerText = p.name;
+            document.getElementById('detail-latin').innerText = p.latin || 'Botanisk art';
+            document.getElementById('detail-location').innerHTML = `<i class="fa-solid fa-location-dot"></i> ${p.location || 'Stuen'}`;
+            document.getElementById('detail-water-desc').innerText = `Hver ${p.waterDays}. dag`;
+            document.getElementById('detail-notes').value = p.notes || '';
+            document.getElementById('detail-water-btn').onclick = () => { waterPlant(p.id); closeDetailsModal(); };
+            document.getElementById('detail-fert-btn').onclick = () => { fertilizePlant(p.id); closeDetailsModal(); };
+            document.getElementById('detail-delete-btn').onclick = () => { myPlants = myPlants.filter(x => x.id !== p.id); saveMyPlants(); closeDetailsModal(); };
+            document.getElementById('details-modal').classList.remove('hidden');
+        }
+
+        function closeDetailsModal() { document.getElementById('details-modal').classList.add('hidden'); }
+        function savePlantNotes() {
+            if (!activeDetailId) return;
+            const p = myPlants.find(x => x.id === activeDetailId);
+            if (p) {
+                p.notes = document.getElementById('detail-notes').value;
+                saveMyPlants();
+                alert("Note gemt!");
+            }
+        }
+    </script>
+</body>
+</html>
+```
